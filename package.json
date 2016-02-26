@@ -1,0 +1,18 @@
+{
+  "name": "solve-hangman-jingkai",
+  "private": true,
+  "version": "0.0.1",
+  "codename": "Jingkai",
+  "repository": {
+    "url": ""
+  },
+  "licenses": [
+    {
+      "type": "MIT"
+    }
+  ],
+  "dependencies": {
+    "word-list": "^1.0.1",
+    "word-list-json": "^0.2.0"
+  }
+}

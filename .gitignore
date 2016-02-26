@@ -1,0 +1,9 @@
+# ignore OS X config file
+.DS_Store
+**/.DS_Store
+# ignore node modules
+node_modules
+# ignore npm debug log file
+npm-debug.log
+# ignore dictionary
+dictionary
