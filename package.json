@@ -12,6 +12,7 @@
     }
   ],
   "dependencies": {
+    "request": "^2.69.0",
     "word-list": "^1.0.1",
     "word-list-json": "^0.2.0"
   }
