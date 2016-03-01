@@ -1,6 +1,8 @@
 'use strict';
 
-let LETTERS_QUEUE = ['e', 't', 'a', 'o', 'i', 'n', 's', 'h', 'r', 'd', 'l', 'u']
+let LETTERS_QUEUE = ['e', 't', 'a', 'o', 'i', 'n', 's', 'h',
+	'r', 'd', 'l', 'c', 'u', 'm', 'w', 'f',
+	'g', 'y', 'p', 'b', 'v', 'k', 'j', 'x', 'q', 'z'];
 let BASE_CHAR_CODE = 'a'.charCodeAt(0);
 
 function Brain(wordList) {
@@ -28,21 +30,22 @@ Brain.prototype.guess = function(word, isNewWord) {
 	}
 
 	let diff = this._diffWord(this._lastWord, word);
-	let isFilterIn = !!diff.length;
-	if (!isFilterIn) {
-		diff = this._chosenLetters[this._chosenLetters.length - 1];
+	let hasDiff = !!diff.length;
+	let letter = '';
+	if (hasDiff) {
+		this._currCollection = this._filterCollection(this._currCollection, diff, true);
+		console.log(`Filtered collection length: ${this._currCollection.length}`);
+
+		let letter = this._determineLetter(this._currCollection);
+		this._chosenLetters.push(letter);
+		this._lastWord = word;
+	} else {
+		letter = this._frequency.shift();
 	}
-
-	this._currCollection = this._filterCollection(this._currCollection, diff, isFilterIn);
-	console.log(`Filtered collection length: ${this._currCollection.length}`);
-
-	let letter = this._determineLetter(this._currCollection);
-	this._chosenLetters.push(letter);
 	return letter.toUpperCase();
 };
 
 Brain.prototype._filterCollection = function(collection, diff, isFilterIn) {
-	debugger;
 	if (!diff) return collection;
 	let filterIn = (el, i) => {
 		let isIn = true;
@@ -55,7 +58,27 @@ Brain.prototype._filterCollection = function(collection, diff, isFilterIn) {
 		return !el.includes(diff);
 	};
 	let filterFunc = isFilterIn ? filterIn : filterOut;
-	return collection.filter(filterFunc);
+	let filteredC = collection.filter(filterFunc);
+	if (filteredC.length === 1) {
+		console.log(filteredC);
+	}
+	return filteredC;
+};
+
+Brain.prototype._calculateFrequency = function(collection) {
+	let letterFrequency = new Array(26).map((el, i) => {
+		return {
+			char: String.fromCharCode(BASE_CHAR_CODE + i),
+			count: 0
+		};
+	});
+	console.log(letterFrequency);
+	collection.forEach((word) => {
+		let len = word.length;
+		for (let i = 0; i < len; i++) {
+			letterFrequency[word.charCodeAt(i) - BASE_CHAR_CODE].count++;
+		}
+	});
 };
 
 Brain.prototype._determineLetter = function(collection) {
@@ -88,6 +111,7 @@ Brain.prototype._newWord = function(word) {
 	this._lastWord = word;
 	this._chosenLetters = [];
 	this._currCollection = this.wordsWithLength[word.length];
+	this._frequency = [].concat(LETTERS_QUEUE);
 };
 
 module.exports = Brain;
