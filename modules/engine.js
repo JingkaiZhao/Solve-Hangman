@@ -13,15 +13,9 @@ function Engine(options, start) {
 	this.playerId = options && options.playerId;
 	this.url = options && options.url;
 	this.currWord = '';
-	this.totalWordCount = 0;
+	this.wordsToGuess = 80;
+	this.guessAllowedEach = 0;
 	this.currWrongGuess = 0;
-	if (start) {
-		this.startGame().then((data) => {
-			console.log(data);
-		}).catch((error) => {
-			console.log(error);
-		});
-	}
 }
 
 Engine.prototype = {
@@ -29,13 +23,9 @@ Engine.prototype = {
 	runWithAlgorithm: function(algorithm) {
 		this.guessAlgorithm = algorithm;
 		this.startGame().then((data) => {
-			this.numberOfWordsToGuess = data.numberOfWordsToGuess;
-			this.numberOfGuessAllowedForEachWord = data.numberOfGuessAllowedForEachWord;
-			return this._next(this.nextWord(), (data) => {
-				console.log(data);
-				let done = this.numberOfWordsToGuess < 0;
-				return done;
-			});
+			this.wordsToGuess = data.numberOfWordsToGuess;
+			this.guessAllowedEach = data.numberOfGuessAllowedForEachWord;
+			return this._next(this.nextWord(), this._hasNext.bind(this));
 		}).then((data) => {
 			console.log(data);
 		});
@@ -48,14 +38,13 @@ Engine.prototype = {
 	_guess: function(promise, resolve) {
 		return promise.then(resolve).then((wrapper) => {
 			if (wrapper.done) {
-				this.numberOfWordsToGuess--;
-				return this._next(this.nextWord(), function(data) {
-					console.log(data);
-					let done = this.numberOfWordsToGuess < 0;
-					return done;
-				});
+				// if current word cannot guess or already have the right answer,
+				// get next word
+				this.wordsToGuess--;
+				return this._next(this.nextWord(), this._hasNext.bind(this));
 			} else {
-				let letter = guessAlgorithm();
+				// if still need guess, get a letter based on current word and guess
+				let letter = this.guessAlgorithm(wrapper.word);
 				console.log(`Guess: ${letter}`);
 				return this._guess(this.guessWord(), resolve);
 			}
@@ -63,23 +52,36 @@ Engine.prototype = {
 	},
 
 	_next: function(promise, resolve) {
-		return promise.then(resolve).then((done) => {
-			if (done) {
+		return promise.then(resolve).then((wrapper) => {
+			if (wrapper.done) {
+				// if no word to guess, return result promise
 				return this.getResult();
 			} else {
-				let letter = guessAlgorithm();
+				// if has word to guess, guess
+				let letter = this.guessAlgorithm(wrapper.word);
 				console.log(`Guess: ${letter}`);
-				this._guess(this.guessWord(letter), (data) => {
-					console.log(data);
-					let guessResult = data.word;
-					let done = guessResult.indexOf('*') < 0 || data.wrongGuessCountOfCurrentWord >= this.numberOfGuessAllowedForEachWord;
-					return {
-						done: done,
-						word: guessResult
-					}
-				});
+				this._guess(this.guessWord(letter), this._willGuess.bind(this));
 			}
 		});
+	},
+
+	_willGuess: function(data) {
+		console.log(data);
+		let guessResult = data.word;
+		let done = guessResult.indexOf('*') < 0 || data.wrongGuessCountOfCurrentWord >= this.guessAllowedEach;
+		return {
+			done: done,
+			word: guessResult
+		}
+	},
+
+	_hasNext: function(data) {
+		console.log(data);
+		let done = this.wordsToGuess < 0;
+		return {
+			done: done,
+			word: data.word
+		};
 	},
 
 	startGame: function() {
