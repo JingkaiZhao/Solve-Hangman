@@ -12,6 +12,7 @@ let GAME_ACTIONS = {
 function Engine(options, start) {
 	this.playerId = options && options.playerId;
 	this.url = options && options.url;
+	this.brain = options && options.brain;
 	this.currWord = '';
 	this.wordsToGuess = 80;
 	this.guessAllowedEach = 0;
@@ -20,19 +21,19 @@ function Engine(options, start) {
 
 Engine.prototype = {
 
-	runWithAlgorithm: function(algorithm) {
-		this.guessAlgorithm = algorithm;
+	runWithBrain: function(brain) {
+		this.brain = brain;
 		this.startGame().then((data) => {
 			this.wordsToGuess = data.numberOfWordsToGuess;
 			this.guessAllowedEach = data.numberOfGuessAllowedForEachWord;
 			return this._next(this.nextWord(), this._hasNext.bind(this));
-		}).then((data) => {
-			console.log(data);
+		}).catch((e) => {
+			console.log(e);
 		});
 	},
 
-	setAlgorithm: function(algorithm) {
-		this.guessAlgorithm = algorithm;
+	setBrain: function(brain) {
+		this.brain = brain;
 	},
 
 	_guess: function(promise, resolve) {
@@ -44,7 +45,7 @@ Engine.prototype = {
 				return this._next(this.nextWord(), this._hasNext.bind(this));
 			} else {
 				// if still need guess, get a letter based on current word and guess
-				let letter = this.guessAlgorithm(wrapper.word);
+				let letter = this.brain.guess(wrapper.word, false);
 				console.log(`Guess: ${letter}`);
 				return this._guess(this.guessWord(), resolve);
 			}
@@ -58,7 +59,7 @@ Engine.prototype = {
 				return this.getResult();
 			} else {
 				// if has word to guess, guess
-				let letter = this.guessAlgorithm(wrapper.word);
+				let letter = this.brain.guess(wrapper.word, true);
 				console.log(`Guess: ${letter}`);
 				this._guess(this.guessWord(letter), this._willGuess.bind(this));
 			}
@@ -66,7 +67,10 @@ Engine.prototype = {
 	},
 
 	_willGuess: function(data) {
-		console.log(data);
+		console.log('----------------------------------');
+		console.log(`Current word: ${data.word}`);
+		console.log(`Guessed words: ${data.totalWordCount}`);
+		console.log(`Wrong guess count: ${data.wrongGuessCountOfCurrentWord}`);
 		let guessResult = data.word;
 		let done = guessResult.indexOf('*') < 0 || data.wrongGuessCountOfCurrentWord >= this.guessAllowedEach;
 		return {
@@ -76,7 +80,10 @@ Engine.prototype = {
 	},
 
 	_hasNext: function(data) {
-		console.log(data);
+		console.log('----------------------------------');
+		console.log(`Current word: ${data.word}`);
+		console.log(`Guessed words: ${data.totalWordCount}`);
+		console.log(`Wrong guess count: ${data.wrongGuessCountOfCurrentWord}`);
 		let done = this.wordsToGuess < 0;
 		return {
 			done: done,
