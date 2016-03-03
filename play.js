@@ -14,8 +14,7 @@ let gameEngine = new Engine({
 	url: 'https://strikingly-hangman.herokuapp.com/game/on'
 });
 
-// gameEngine.runWithBrain(brain);
-brain._calculateFrequency(['hello', 'world']);
+gameEngine.playWithBrain(brain);
 
 function guessAlgorithm(word) {
 	return letters[Math.floor(26 * Math.random())];

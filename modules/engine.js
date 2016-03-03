@@ -21,7 +21,7 @@ function Engine(options, start) {
 
 Engine.prototype = {
 
-	runWithBrain: function(brain) {
+	playWithBrain: function(brain) {
 		this.brain = brain;
 		this.startGame().then((data) => {
 			this.wordsToGuess = data.numberOfWordsToGuess;
@@ -49,6 +49,8 @@ Engine.prototype = {
 				console.log(`Guess: ${letter}`);
 				return this._guess(this.guessWord(), resolve);
 			}
+		}).catch((e) => {
+			console.log(e);
 		});
 	},
 
@@ -63,6 +65,8 @@ Engine.prototype = {
 				console.log(`Guess: ${letter}`);
 				this._guess(this.guessWord(letter), this._willGuess.bind(this));
 			}
+		}).catch((e) => {
+			console.log(e);
 		});
 	},
 

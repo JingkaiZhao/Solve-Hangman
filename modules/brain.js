@@ -36,13 +36,15 @@ Brain.prototype.guess = function(word, isNewWord) {
 		this._currCollection = this._filterCollection(this._currCollection, diff, true);
 		console.log(`Filtered collection length: ${this._currCollection.length}`);
 
-		let letter = this._determineLetter(this._currCollection);
-		this._chosenLetters.push(letter);
+		// let letter = this._determineLetter(this._currCollection);
+		this._frequency = this._calculateFrequency(this._currCollection);
+		letter = this._frequency.shift();
 		this._lastWord = word;
 	} else {
 		letter = this._frequency.shift();
 	}
-	return letter.toUpperCase();
+	this._chosenLetters.push(letter);
+	return letter.char.toUpperCase();
 };
 
 Brain.prototype._filterCollection = function(collection, diff, isFilterIn) {
@@ -60,25 +62,26 @@ Brain.prototype._filterCollection = function(collection, diff, isFilterIn) {
 	let filterFunc = isFilterIn ? filterIn : filterOut;
 	let filteredC = collection.filter(filterFunc);
 	if (filteredC.length === 1) {
-		console.log(filteredC);
+		console.log('Get 1 specified word: ', filteredC);
 	}
 	return filteredC;
 };
 
 Brain.prototype._calculateFrequency = function(collection) {
-	let letterFrequency = new Array(26).map((el, i) => {
+	let letterFrequency = new Array(26).fill(0).map((el, i) => {
 		return {
 			char: String.fromCharCode(BASE_CHAR_CODE + i),
 			count: 0
 		};
 	});
-	console.log(letterFrequency);
 	collection.forEach((word) => {
 		let len = word.length;
 		for (let i = 0; i < len; i++) {
-			letterFrequency[word.charCodeAt(i) - BASE_CHAR_CODE].count++;
+			letterFrequency[word.charCodeAt(i) - BASE_CHAR_CODE].count += 1;
 		}
 	});
+	letterFrequency.sort((a, b) => (b.count - a.count));
+	return letterFrequency;
 };
 
 Brain.prototype._determineLetter = function(collection) {
@@ -111,7 +114,12 @@ Brain.prototype._newWord = function(word) {
 	this._lastWord = word;
 	this._chosenLetters = [];
 	this._currCollection = this.wordsWithLength[word.length];
-	this._frequency = [].concat(LETTERS_QUEUE);
+	this._frequency = LETTERS_QUEUE.map((el) => {
+		return {
+			char: el,
+			count: 0
+		};
+	});
 };
 
 module.exports = Brain;
